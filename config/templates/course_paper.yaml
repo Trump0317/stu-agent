@@ -1,0 +1,25 @@
+# 课程论文模板
+name: 课程论文
+type: course_paper
+sections:
+  - title: 摘要
+    description: 简要概述研究背景、方法、主要发现和结论
+    min_words: 200
+    max_words: 500
+  - title: 关键词
+    description: 3-5 个核心关键词
+  - title: 引言
+    description: 研究背景、问题陈述、研究意义
+    min_words: 500
+  - title: 文献综述
+    description: 相关领域已有研究成果的梳理与评述
+    min_words: 800
+  - title: 正文
+    description: 论文主体，可包含多个子章节
+    min_words: 2000
+    subsections: true
+  - title: 结论
+    description: 总结研究发现，展望未来方向
+    min_words: 500
+  - title: 参考文献
+    description: 引用文献列表
