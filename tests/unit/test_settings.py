@@ -1,4 +1,9 @@
-"""配置加载与校验 — 单元测试"""
+"""配置加载与校验 — 单元测试
+
+审核人: 待审核
+审核日期: -
+审核状态: [待审核]
+"""
 
 import tempfile
 from pathlib import Path
