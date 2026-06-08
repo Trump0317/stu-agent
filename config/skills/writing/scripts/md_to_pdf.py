@@ -46,33 +46,46 @@ def _pdf_via_reportlab(md_path: Path, output_path: Path) -> bool:
         pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))
 
         styles = getSampleStyleSheet()
+        # 正文：五号字，1.5 倍行距
         styles.add(ParagraphStyle(
             "CJK_Normal",
             parent=styles["Normal"],
             fontName="STSong-Light",
-            fontSize=11,
-            leading=18,
+            fontSize=10.5,
+            leading=22,
+            firstLineIndent=21,  # 首行缩进两个字符
+            spaceAfter=4,
         ))
+        # 一级标题：三号，居中
         styles.add(ParagraphStyle(
             "CJK_Heading1",
             parent=styles["Heading1"],
             fontName="STSong-Light",
-            fontSize=18,
-            leading=24,
+            fontSize=16,
+            leading=28,
+            spaceBefore=20,
+            spaceAfter=12,
+            alignment=1,  # 居中
         ))
+        # 二级标题：四号
         styles.add(ParagraphStyle(
             "CJK_Heading2",
             parent=styles["Heading2"],
             fontName="STSong-Light",
             fontSize=14,
-            leading=20,
+            leading=24,
+            spaceBefore=16,
+            spaceAfter=8,
         ))
+        # 三级标题：小四
         styles.add(ParagraphStyle(
             "CJK_Heading3",
             parent=styles["Heading3"],
             fontName="STSong-Light",
             fontSize=12,
-            leading=18,
+            leading=20,
+            spaceBefore=12,
+            spaceAfter=6,
         ))
 
         text = md_path.read_text(encoding="utf-8")
@@ -80,8 +93,8 @@ def _pdf_via_reportlab(md_path: Path, output_path: Path) -> bool:
 
         doc = SimpleDocTemplate(
             str(output_path), pagesize=A4,
-            leftMargin=25*mm, rightMargin=25*mm,
-            topMargin=20*mm, bottomMargin=20*mm,
+            leftMargin=30*mm, rightMargin=25*mm,
+            topMargin=25*mm, bottomMargin=20*mm,
         )
         story = []
 
