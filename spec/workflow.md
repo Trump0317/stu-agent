@@ -21,7 +21,7 @@ fix/xxx         ← Bug 修复分支（从 dev 拉出）
 ```
 Step 0  更新里程碑任务状态 [ ] → [~]
 Step 1  编写测试文件 → 标记 [待审核]
-Step 2  reviewer agent 辅助审查 → 展示审查结果
+Step 2  ⚠️ 自动调用 reviewer agent（subagent）审查测试 → 展示审查结果
 Step 3  ⚠️ 开发者回复「通过」→ 改 [待审核] 为 [已通过]
 Step 4  编写实现代码 → pytest -q 全部通过
 Step 5  ⚠️ 展示结果给开发者
