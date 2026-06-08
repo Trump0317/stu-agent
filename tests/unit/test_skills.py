@@ -487,8 +487,9 @@ class TestWritingSkillContent:
         skill = load_skill("writing")
         prompt = skill.system_prompt
         has_numbered = any(
-            f"{n}." in prompt or f"{n}、" in prompt or f"Step {n}" in prompt
-            for n in range(1, 5)
+            f"{n}." in prompt or f"{n}、" in prompt
+            or f"Step {n}" in prompt or f"步骤 {n}" in prompt
+            for n in range(1, 6)
         )
         assert has_numbered, "缺失分步编号"
 
