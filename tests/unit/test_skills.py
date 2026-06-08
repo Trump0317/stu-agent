@@ -96,13 +96,12 @@ class TestSkillMdFormat:
         assert (skill.dir / "SKILL.md").exists()
 
     def test_skill_has_scripts(self):
-        """scripts/ 目录存在，format.sh 可访问可执行"""
+        """scripts/ 目录存在，format.py 可访问"""
         skill = load_skill("writing")
         scripts_dir = skill.dir / "scripts"
         assert scripts_dir.is_dir()
-        format_sh = scripts_dir / "format.sh"
-        assert format_sh.is_file()
-        assert os.access(format_sh, os.X_OK)
+        format_py = scripts_dir / "format.py"
+        assert format_py.is_file()
 
     # ---- _parse_skill_md 单元测试 ----
 
@@ -398,7 +397,7 @@ class TestAgentWithSkill:
         assert "写作助手" in agent.state.system_prompt
 
     def test_custom_script_not_registered(self):
-        """自定义脚本（format.sh）不作为独立 Tool 注册"""
+        """自定义脚本（format.py）不作为独立 Tool 注册"""
         MockLLM = _make_mock_llm()
         agent, registry = create_agent_from_skill("writing", MockLLM())
 
@@ -412,7 +411,7 @@ class TestAgentWithSkill:
         MockLLM = _make_mock_llm()
         agent, registry = create_agent_from_skill("writing", MockLLM())
 
-        assert "scripts/format.sh" in agent.state.system_prompt
+        assert "scripts/format.py" in agent.state.system_prompt
 
     def test_nonexistent_skill_raises(self):
         """不存在的 skill 抛出 FileNotFoundError"""
