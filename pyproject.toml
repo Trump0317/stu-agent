@@ -19,6 +19,7 @@ dev = [
 ]
 pdf = [
     "weasyprint>=60.0",
+    "reportlab>=4.0",
 ]
 
 [tool.pytest.ini_options]

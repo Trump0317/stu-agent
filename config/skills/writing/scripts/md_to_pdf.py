@@ -4,12 +4,136 @@
 用法:
     python scripts/md_to_pdf.py <input.md> [output.pdf]
 
-方案 A: markdown + weasyprint
-方案 B: 先转 docx 再调用 docx_to_pdf（备选）
+方案 A: weasyprint（CJK 字体可用时）
+方案 B: reportlab（内置 CJK 字体）
+方案 C: md→docx→LibreOffice（备选）
 """
 
 import sys
 from pathlib import Path
+
+
+def _pdf_via_weasyprint(md_path: Path, output_path: Path) -> bool:
+    """方案 A: weasyprint"""
+    try:
+        import markdown
+        from weasyprint import HTML
+
+        md_text = md_path.read_text(encoding="utf-8")
+        html = markdown.markdown(md_text, extensions=["extra", "codehilite"])
+        html_doc = f"""<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>body {{ font-family: sans-serif; max-width: 800px; margin: auto; padding: 20px; }}</style>
+</head><body>{html}</body></html>"""
+        HTML(string=html_doc).write_pdf(str(output_path))
+        return True
+    except Exception:
+        return False
+
+
+def _pdf_via_reportlab(md_path: Path, output_path: Path) -> bool:
+    """方案 B: reportlab + 内置 CJK 字体"""
+    import re
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import mm
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+
+    try:
+        # 注册 CJK 字体
+        pdfmetrics.registerFont(UnicodeCIDFont("STSong-Light"))
+
+        styles = getSampleStyleSheet()
+        styles.add(ParagraphStyle(
+            "CJK_Normal",
+            parent=styles["Normal"],
+            fontName="STSong-Light",
+            fontSize=11,
+            leading=18,
+        ))
+        styles.add(ParagraphStyle(
+            "CJK_Heading1",
+            parent=styles["Heading1"],
+            fontName="STSong-Light",
+            fontSize=18,
+            leading=24,
+        ))
+        styles.add(ParagraphStyle(
+            "CJK_Heading2",
+            parent=styles["Heading2"],
+            fontName="STSong-Light",
+            fontSize=14,
+            leading=20,
+        ))
+        styles.add(ParagraphStyle(
+            "CJK_Heading3",
+            parent=styles["Heading3"],
+            fontName="STSong-Light",
+            fontSize=12,
+            leading=18,
+        ))
+
+        text = md_path.read_text(encoding="utf-8")
+        lines = text.splitlines()
+
+        doc = SimpleDocTemplate(
+            str(output_path), pagesize=A4,
+            leftMargin=25*mm, rightMargin=25*mm,
+            topMargin=20*mm, bottomMargin=20*mm,
+        )
+        story = []
+
+        for line in lines:
+            line = line.strip()
+            if not line:
+                story.append(Spacer(1, 6))
+                continue
+
+            if line.startswith("### "):
+                story.append(Paragraph(line[4:], styles["CJK_Heading3"]))
+            elif line.startswith("## "):
+                story.append(Paragraph(line[3:], styles["CJK_Heading2"]))
+            elif line.startswith("# "):
+                story.append(Paragraph(line[2:], styles["CJK_Heading1"]))
+            elif line.startswith("- "):
+                story.append(Paragraph("• " + line[2:], styles["CJK_Normal"]))
+            else:
+                story.append(Paragraph(line, styles["CJK_Normal"]))
+
+        doc.build(story)
+        return True
+    except Exception:
+        return False
+
+
+def _pdf_via_libreoffice(md_path: Path, output_path: Path) -> bool:
+    """方案 C: md→docx→LibreOffice"""
+    import subprocess
+    import tempfile
+
+    scripts_dir = Path(__file__).parent
+    with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as tmp:
+        tmp_docx = tmp.name
+
+    try:
+        r = subprocess.run(
+            [sys.executable, str(scripts_dir / "md_to_docx.py"),
+             str(md_path), tmp_docx],
+            capture_output=True, text=True,
+        )
+        if r.returncode != 0:
+            return False
+
+        r = subprocess.run(
+            [sys.executable, str(scripts_dir / "docx_to_pdf.py"),
+             tmp_docx, str(output_path)],
+            capture_output=True, text=True,
+        )
+        return r.returncode == 0
+    finally:
+        Path(tmp_docx).unlink(missing_ok=True)
 
 
 def main():
@@ -24,54 +148,18 @@ def main():
 
     output_path = Path(sys.argv[2]) if len(sys.argv) > 2 else md_path.with_suffix(".pdf")
 
-    # 方案 A: weasyprint
-    try:
-        import markdown
-        from weasyprint import HTML
+    for name, fn in [
+        ("reportlab", _pdf_via_reportlab),
+        ("weasyprint", _pdf_via_weasyprint),
+        ("LibreOffice", _pdf_via_libreoffice),
+    ]:
+        if fn(md_path, output_path):
+            print(f"PDF 已生成 → {output_path}")
+            return
+        print(f"  方案 {name} 不可用，尝试下一个...", file=sys.stderr)
 
-        md_text = md_path.read_text(encoding="utf-8")
-        html = markdown.markdown(md_text, extensions=["extra", "codehilite"])
-        html_doc = f"""<!DOCTYPE html>
-<html><head><meta charset="utf-8">
-<style>body {{ font-family: 'Noto Sans CJK SC', sans-serif; max-width: 800px; margin: auto; padding: 20px; }}</style>
-</head><body>{html}</body></html>"""
-        HTML(string=html_doc).write_pdf(str(output_path))
-        print(f"PDF 已生成 → {output_path}")
-        return
-    except ImportError:
-        pass
-
-    # 方案 B: 先转 docx 再转 pdf
-    try:
-        import subprocess
-        import tempfile
-
-        scripts_dir = Path(__file__).parent
-        with tempfile.NamedTemporaryFile(suffix=".docx", delete=False) as tmp:
-            tmp_docx = tmp.name
-
-        # md → docx
-        r = subprocess.run(
-            [sys.executable, str(scripts_dir / "md_to_docx.py"), str(md_path), tmp_docx],
-            capture_output=True, text=True,
-        )
-        if r.returncode != 0:
-            print(f"错误: md→docx 失败: {r.stderr}", file=sys.stderr)
-            sys.exit(1)
-
-        # docx → pdf
-        r = subprocess.run(
-            [sys.executable, str(scripts_dir / "docx_to_pdf.py"), tmp_docx, str(output_path)],
-            capture_output=True, text=True,
-        )
-        Path(tmp_docx).unlink(missing_ok=True)
-        if r.returncode != 0:
-            print(f"错误: docx→pdf 失败: {r.stderr}", file=sys.stderr)
-            sys.exit(1)
-        print(f"PDF 已生成 → {output_path}")
-    except Exception as e:
-        print(f"错误: PDF 生成失败，请安装 weasyprint 或 LibreOffice: {e}", file=sys.stderr)
-        sys.exit(1)
+    print("错误: 所有 PDF 方案均失败，请安装 weasyprint 或 reportlab", file=sys.stderr)
+    sys.exit(1)
 
 
 if __name__ == "__main__":
