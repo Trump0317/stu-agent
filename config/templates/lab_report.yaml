@@ -1,0 +1,24 @@
+# 实验报告模板
+name: 实验报告
+type: lab_report
+sections:
+  - title: 实验目的
+    description: 本次实验要验证的原理或达成的目标
+    min_words: 100
+  - title: 实验原理
+    description: 实验所依据的理论基础与公式
+    min_words: 200
+  - title: 实验器材
+    description: 使用的仪器、设备、材料清单
+  - title: 实验步骤
+    description: 操作流程的详细描述
+    min_words: 300
+  - title: 实验数据
+    description: 原始数据记录、表格
+    min_words: 200
+  - title: 结果分析
+    description: 数据处理、图表、误差分析
+    min_words: 400
+  - title: 结论
+    description: 实验结论与思考
+    min_words: 200
