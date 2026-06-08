@@ -1,4 +1,4 @@
-### M3：Skill 系统 `[~]`
+### M3：Skill 系统 `[x]`
 
 > 目标：业务能力与基础工具解耦。参照 pi Agent Skills 标准，
 > Skill = SKILL.md（YAML frontmatter + Markdown 正文）。
@@ -7,9 +7,9 @@
 
 | # | 任务 | 状态 |
 |---|------|------|
-| M3-1 | SKILL.md 格式定义 + writing skill | [~] |
-| M3-2 | Skill 加载 + prompt 拼装 + Agent 初始化 | [ ] |
-| M3-3 | Skill 单元测试 | [ ] |
+| M3-1 | SKILL.md 格式定义 + writing skill | [x] |
+| M3-2 | Skill 加载 + prompt 拼装 + Agent 初始化 | [x] |
+| M3-3 | Skill 单元测试 | [x] |
 
 ##### M3-1：SKILL.md 格式定义
 
