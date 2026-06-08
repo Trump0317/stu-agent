@@ -1,5 +1,7 @@
 ### M4：写作 Agent `[x]`
 
+> PDF 字体需进一步优化（当前 reportlab STSong-Light），可考虑后续捆绑中文字体。
+
 > 目标：Skill 自包含。模板解析 + docx 填充 + md→word 全部作为脚本放在 `scripts/`，
 > Agent 通过 bash 调用。自定义模板支持 .yaml / .md / .docx，
 > .docx 填充保留原样式。移除 `src/converter/`。
