@@ -115,9 +115,15 @@ async def main():
     )
 
     # 场景 2: 实验报告 (.yaml 模板)
-    results["scenario_2_lab_report"] = await runner.run_scenario(
+    results["scenario_2_lab_report_yaml"] = await runner.run_scenario(
         "写实验报告 (.yaml 模板)",
         "用 config/templates/lab_report.yaml 模板写一份关于牛顿第二定律验证的实验报告",
+    )
+
+    # 场景 3: 实验报告 (.md 模板)
+    results["scenario_3_lab_report_md"] = await runner.run_scenario(
+        "写实验报告 (.md 模板)",
+        "用 config/templates/report.md 模板写一份关于机器学习分类算法的实验报告",
     )
 
     # 边界 1: 闲聊
