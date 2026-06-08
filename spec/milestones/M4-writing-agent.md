@@ -8,10 +8,10 @@
 |---|------|------|
 | M4-1 | Skill 脚本：模板解析 + docx 填充 + md→word | [x] |
 | M4-2 | 写作 SKILL.md 完善 | [ ] |
-| M4-3 | 单元测试（脚本级） | [ ] |
+| M4-3 | 单元测试（脚本级） | [x] |
 | M4-4 | E2E 测试 + 边界（真实 LLM） | [ ] |
 
-##### M4-1：Skill 脚本 `[ ]`
+##### M4-1：Skill 脚本 `[x]`
 
 - **目标**：writing skill 自包含模板处理能力，均为命令行脚本。
 - **文件**：`config/skills/writing/scripts/`
@@ -21,7 +21,7 @@
 |------|------|------|
 | `format.py` | Markdown 格式化 | `python scripts/format.py <in.md> [out.md]` |
 | `read_template.py` | 读取模板，输出章节结构 | `python scripts/read_template.py <path>` |
-| `fill_docx.py` | 填充 .docx，保留样式 | `python scripts/fill_docx.py <tmpl> '<json>' <out>` |
+| `fill_docx.py` | 填充 .docx，保留样式 | `python scripts/fill_docx.py <tmpl.docx> <content.md> <out.docx>` |
 | `md_to_docx.py` | Markdown → .docx | `python scripts/md_to_docx.py <in.md> <out.docx>` |
 | `md_to_pdf.py` | Markdown → PDF | `python scripts/md_to_pdf.py <in.md> [out.pdf]` |
 | `docx_to_pdf.py` | .docx → PDF | `python scripts/docx_to_pdf.py <in.docx> [out.pdf]` |
@@ -60,7 +60,7 @@
   - `.docx` 模板：`fill_docx.py` 导出，可选 `docx_to_pdf.py` 转 PDF
 - **验收**：LLM 按流程执行，不跳步
 
-##### M4-3：单元测试（脚本级）`[ ]`
+##### M4-3：单元测试（脚本级）`[x]`
 
 - **目标**：脚本独立可测。
 - **文件**：`tests/unit/test_m4_scripts.py`

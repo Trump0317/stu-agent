@@ -32,7 +32,7 @@ def split_md_sections(md_path: Path) -> list[str]:
 
 
 def insert_text_after(para, text: str, doc: Document):
-    """在段落之后插入新段落，内容为 text，样式继承 Normal"""
+    """在段落之后插入新段落，返回新插入的段落引用（用于后续追加）"""
     # 复制当前段落结构作为模板
     new_p_elem = deepcopy(para._element)
     # 清空原有 runs
@@ -53,6 +53,7 @@ def insert_text_after(para, text: str, doc: Document):
     pStyle.set(qn("w:val"), "Normal")
     # 插入
     para._element.addnext(new_p_elem)
+    return new_p_elem
 
 
 def fill_docx(template_path: Path, md_path: Path, output_path: Path):
@@ -77,12 +78,16 @@ def fill_docx(template_path: Path, md_path: Path, output_path: Path):
         body_lines = section_md.splitlines()
         content = "\n".join(line for line in body_lines if not line.startswith("##")).strip()
         if content:
+            insert_point = heading_para
             for line in content.split("\n"):
-                insert_text_after(heading_para, line, doc)
-                # 更新 heading_para 指向刚插入的段落（后续插入紧跟）
-                # 找到最后一个段落
-                last = doc.paragraphs[-1]
-                heading_para = last
+                new_elem = insert_text_after(insert_point, line, doc)
+                # 更新插入点：取刚插入元素的下一段作为新的 anchor
+                # 用 Paragraph 包装刚插入的元素
+                next_para = next(
+                    (p for p in doc.paragraphs if p._element is new_elem), None
+                )
+                if next_para is not None:
+                    insert_point = next_para
 
     doc.save(str(output_path))
     print(f"填充完成 → {output_path}")
