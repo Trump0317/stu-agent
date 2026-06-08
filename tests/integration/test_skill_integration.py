@@ -267,7 +267,8 @@ class TestSkillEventCallbacks:
         [c async for c in session.run("用户问题")]
 
         messages = session.agent.state.messages
-        assert len(messages) >= 2  # user + assistant at minimum
-        assert messages[0].role == "user"
-        assert messages[0].content == "用户问题"
+        assert len(messages) >= 3  # system + user + assistant
+        assert messages[0].role == "system"
+        assert messages[1].role == "user"
+        assert messages[1].content == "用户问题"
         assert messages[-1].role == "assistant"

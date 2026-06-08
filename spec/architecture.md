@@ -8,7 +8,7 @@
 | **后端** | FastAPI | 轻量、异步、与 NiceGUI 天然融合 |
 | **Agent Core** | 自研 | 参考 pi-core 风格，事件驱动 + 工厂模式 |
 | **LLM 调用** | OpenAI SDK + 自定义适配 | 兼容 DeepSeek/Qwen/OpenAI |
-| **文档转换** | python-docx + markdown | MD→Word 转换 |
+| **文档生成** | python-docx + markdown | Skill 脚本（md_to_docx / fill_docx） |
 | **打包** | PyInstaller | 独立可执行文件，无需安装 Python |
 | **测试** | pytest + pytest-asyncio | TDD 核心工具链 |
 
@@ -71,7 +71,6 @@ stu-agent/
 │   ├── llm/                       # LLM 抽象层
 │   ├── observability/             # 可观测性
 │   ├── ui/                        # NiceGUI 前端 (M5)
-│   ├── converter/                 # 文档转换 (M4)
 │   └── storage/                   # 存储层
 │
 ├── tests/

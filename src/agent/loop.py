@@ -54,7 +54,9 @@ async def agent_loop(
     turn = 1
     yield TurnStart(turn=turn)
 
-    # 3. 构建 user message
+    # 3. 构建 system + user message
+    if system_prompt:
+        messages.insert(0, AgentMessage(role="system", content=system_prompt))
     user_msg = AgentMessage(role="user", content=user_input)
     messages.append(user_msg)
 

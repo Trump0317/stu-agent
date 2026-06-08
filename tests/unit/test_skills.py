@@ -96,13 +96,12 @@ class TestSkillMdFormat:
         assert (skill.dir / "SKILL.md").exists()
 
     def test_skill_has_scripts(self):
-        """scripts/ 目录存在，format.sh 可访问可执行"""
+        """scripts/ 目录存在，format.py 可访问"""
         skill = load_skill("writing")
         scripts_dir = skill.dir / "scripts"
         assert scripts_dir.is_dir()
-        format_sh = scripts_dir / "format.sh"
-        assert format_sh.is_file()
-        assert os.access(format_sh, os.X_OK)
+        format_py = scripts_dir / "format.py"
+        assert format_py.is_file()
 
     # ---- _parse_skill_md 单元测试 ----
 
@@ -398,7 +397,7 @@ class TestAgentWithSkill:
         assert "写作助手" in agent.state.system_prompt
 
     def test_custom_script_not_registered(self):
-        """自定义脚本（format.sh）不作为独立 Tool 注册"""
+        """自定义脚本（format.py）不作为独立 Tool 注册"""
         MockLLM = _make_mock_llm()
         agent, registry = create_agent_from_skill("writing", MockLLM())
 
@@ -412,7 +411,7 @@ class TestAgentWithSkill:
         MockLLM = _make_mock_llm()
         agent, registry = create_agent_from_skill("writing", MockLLM())
 
-        assert "scripts/format.sh" in agent.state.system_prompt
+        assert "scripts/format.py" in agent.state.system_prompt
 
     def test_nonexistent_skill_raises(self):
         """不存在的 skill 抛出 FileNotFoundError"""
@@ -459,3 +458,75 @@ class TestAgentWithSkill:
             assert reg_schemas == agent_tool_names
         finally:
             skills_mod.SKILLS_DIR = original
+
+
+# ============================================================
+# M4-2: Writing SKILL.md 内容验证
+# 验收: 含脚本引用、分步流程、双模板路径、导出指令
+# ============================================================
+
+class TestWritingSkillContent:
+    """M4-2: writing SKILL.md 内容完整性
+
+    [~]
+    """
+
+    def test_contains_all_script_references(self):
+        """system_prompt 引用全部 6 个脚本"""
+        skill = load_skill("writing")
+        prompt = skill.system_prompt
+        scripts = [
+            "read_template.py", "fill_docx.py", "md_to_docx.py",
+            "md_to_pdf.py", "docx_to_pdf.py", "format.py",
+        ]
+        for s in scripts:
+            assert s in prompt, f"缺失脚本引用: {s}"
+
+    def test_has_step_by_step_workflow(self):
+        """包含明确的步骤编号流程"""
+        skill = load_skill("writing")
+        prompt = skill.system_prompt
+        has_numbered = any(
+            f"{n}." in prompt or f"{n}、" in prompt
+            or f"Step {n}" in prompt or f"步骤 {n}" in prompt
+            for n in range(1, 6)
+        )
+        assert has_numbered, "缺失分步编号"
+
+    def test_yaml_md_template_uses_export_script(self):
+        """.yaml / .md 模板关联 md_to_docx 或 md_to_pdf 导出"""
+        skill = load_skill("writing")
+        prompt = skill.system_prompt
+        has_yaml_md = (".yaml" in prompt or "YAML" in prompt or ".md 模板" in prompt)
+        has_export = "md_to_docx.py" in prompt or "md_to_pdf.py" in prompt
+        assert has_yaml_md, "缺失 .yaml/.md 模板路径说明"
+        assert has_export, "缺失 .yaml/.md 导出脚本引用"
+
+    def test_docx_template_uses_fill_script(self):
+        """.docx 模板关联 fill_docx 导出"""
+        skill = load_skill("writing")
+        prompt = skill.system_prompt
+        assert ".docx" in prompt, "缺失 .docx 模板路径说明"
+        assert "fill_docx.py" in prompt, "缺失 fill_docx.py 引用"
+
+    def test_contains_export_instructions(self):
+        """包含具体导出脚本调用范例"""
+        skill = load_skill("writing")
+        prompt = skill.system_prompt
+        has_export = (
+            "md_to_docx.py" in prompt or "fill_docx.py" in prompt
+            or "md_to_pdf.py" in prompt or "docx_to_pdf.py" in prompt
+        )
+        assert has_export, "缺失导出脚本调用"
+
+    def test_uses_scripts_not_raw_tools(self):
+        """使用脚本（read_template.py）而非直接 read_file/write_file"""
+        skill = load_skill("writing")
+        prompt = skill.system_prompt
+        # 应使用脚本读取模板，而非原始 read_file
+        assert "read_template.py" in prompt, "应使用 read_template.py 读取模板"
+        # 导出应走脚本，而非 write_file 写 .md
+        has_script_export = any(
+            s in prompt for s in ["md_to_docx.py", "fill_docx.py", "md_to_pdf.py"]
+        )
+        assert has_script_export, "导出应使用脚本而非 write_file"

@@ -8,7 +8,7 @@ Skill 格式：目录 + SKILL.md（YAML frontmatter + Markdown 正文）
 config/skills/writing/
 ├── SKILL.md              # frontmatter(name, description) + Markdown 指令
 └── scripts/              # 自定义脚本（通过 bash 执行）
-    └── format.sh
+    └── format.py
 ```
 
 参照 pi 设计：
