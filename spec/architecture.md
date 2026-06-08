@@ -14,7 +14,27 @@
 
 ### 3.2 Agent Core 设计（对齐 pi 架构）
 
-
+```
+┌─────────────────────────────────────────────────────┐
+│              AgentSession (会话编排)                  │
+│  on_turn_start/end, on_tool_call/result, on_chunk   │
+│  run(user_input) → agent_loop → 事件分发 → 流式输出  │
+└────────┬───────────────────────────┬────────────────┘
+         │                           │
+┌────────▼──────────┐    ┌───────────▼──────────────┐
+│   Agent (状态)     │    │   agent_loop (纯函数)     │
+│  system_prompt    │    │  while tool_round<max:   │
+│  messages[]       │    │    LLM stream            │
+│  tools[]          │    │    if tool_call: execute  │
+└───────────────────┘    │    else: yield text,break │
+                         └──────────┬───────────────┘
+                                    │
+┌───────────────────────────────────▼───────────────┐
+│            ToolExecutor + ToolRegistry              │
+│  before_hook → execute → after_hook                 │
+│  read_file / write_file / bash                      │
+└────────────────────────────────────────────────────┘
+```
 
 **关键设计原则（对齐 pi）：**
 - **AgentSession 事件驱动**：对标 pi AgentSession，回调属性 on_turn_start/end, on_tool_call/result，UI 层通过 callback 订阅。
@@ -26,7 +46,41 @@
 
 ### 3.3 项目目录结构
 
-
+```
+stu-agent/
+├── config/
+│   ├── settings.yaml              # LLM 配置
+│   ├── templates/                 # 文档模板 (course_paper / lab_report)
+│   └── skills/                    # Skill 定义 (writing.yaml)
+│
+├── src/
+│   ├── agent/                     # Agent Core
+│   │   ├── types.py               # 类型定义
+│   │   ├── events.py              # 事件联合类型
+│   │   ├── executor.py            # ToolExecutor
+│   │   ├── loop.py                # agent_loop 纯函数
+│   │   ├── agent.py               # Agent 状态管理
+│   │   └── session.py             # AgentSession 会话编排
+│   ├── tools/                     # 基础工具
+│   │   ├── base.py                # BaseTool + ToolResult
+│   │   ├── registry.py            # ToolRegistry
+│   │   ├── file_tools.py          # read_file + write_file
+│   │   └── bash_tool.py           # bash 命令执行
+│   ├── skills/                    # Skill 系统
+│   │   └── __init__.py            # load_skill / list_skills / build_system_prompt
+│   ├── llm/                       # LLM 抽象层
+│   ├── observability/             # 可观测性
+│   ├── ui/                        # NiceGUI 前端 (M5)
+│   ├── converter/                 # 文档转换 (M4)
+│   └── storage/                   # 存储层
+│
+├── tests/
+│   ├── unit/
+│   └── integration/
+│
+├── main.py
+└── spec/
+```
 
 ## 5. 系统架构与模块设计
 
@@ -95,6 +149,7 @@ class AgentSession:
     on_tool_result: Callable | None
 
     async def run(user_input: str) -> AsyncIterator[str]
+        # 回调: on_chunk(callable) — 流式文本增量
 ```
 
 **职责**：构建 AgentContext + AgentLoopConfig → 调用 agent_loop → 分发事件到回调 → 流式输出文本。
@@ -168,43 +223,30 @@ def build_system_prompt(skill, tools) -> str
 ### 5.3 数据流
 
 ```
-用户输入 "帮我写一篇关于区块链的论文"
+用户输入 "写实验报告"
     │
     ▼
-Agent.prompt(user_input)
+AgentSession.run(user_input)
     │
     ▼ 构建 AgentContext(system_prompt, messages, tools)
-    ▼ 构建 AgentLoopConfig(stream_fn, hooks, ...)
+    ▼ 构建 AgentLoopConfig(stream_fn=llm.stream, ...)
     │
-    ▼ agent_loop(prompt, context, config):
-    │   emit BeforeAgentStart
+    ▼ agent_loop(prompt, context, config, tool_registry):
     │   while tool_round < max_tool_rounds:
-    │       transform_context(messages) → 转换上下文
-    │       convert_to_llm(messages) → OpenAI 格式
-    │       stream_fn(llm_messages, tools) → 流式响应
-    │       ├─ response.is_tool_call:
-    │       │   emit ToolStart
-    │       │   before_hook → 检查拦截
-    │       │   executor.execute_tools(tool_calls, registry) → 结果
-    │       │   emit ToolEnd
-    │       │   messages += tool_results
-    │       │   continue (结果喂回 LLM)
-    │       └─ response.text:
-    │           emit MessageUpdate(delta)
-    │           yield delta  ──────────────────┐
-    │           if finish_reason == "stop":    │
-    │               emit TurnEnd               │
-    │               emit AgentEnd              │
-    │               break                      │
-    │                                          │
-    ▼ Agent.prompt() 内部:                     │
-    │   for event in agent_loop(...):          │
-    │       _emit(event) → 通知 listeners      │
-    │       if MessageUpdate: yield delta ─────┘
-    │   更新 state.messages
+    │       stream_fn(messages, tools) → 流式响应
+    │       ├─ is_tool_call:
+    │       │   ToolStart → execute_tools → ToolEnd
+    │       │   结果喂回 messages → continue
+    │       └─ text:
+    │           MessageUpdate(delta) → yield delta
+    │           finish_reason=stop → break
+    │
+    ▼ AgentSession.run() 内部:
+    │   分发事件到 on_turn_start/end, on_tool_call/result, on_chunk
+    │   流式 yield text → AgentEnd → 更新 agent.state.messages
     │
     ▼
-NiceGUI / 调用方 流式渲染文本
+UI / 调用方 流式渲染文本
 ```
 
 ---
