@@ -51,7 +51,7 @@ stu-agent/
 ├── config/
 │   ├── settings.yaml              # LLM 配置
 │   ├── templates/                 # 文档模板 (course_paper / lab_report)
-│   └── skills/                    # Skill 定义 (writing.yaml)
+│   └── skills/                    # Skill 目录 (SKILL.md + scripts/)
 │
 ├── src/
 │   ├── agent/                     # Agent Core
@@ -116,9 +116,9 @@ stu-agent/
 │         ┌─────────────────────────────┼──────────────┐  │
 │  ┌──────▼──────┐  ┌────────────┐  ┌───▼─────────────┐  │
 │  │ ToolRegistry│  │ LLM Provider│  │ Skill 系统      │  │
-│  │ read_file   │  │ DeepSeek    │  │ writing.yaml    │  │
-│  │ write_file  │  │ Qwen        │  │ → prompt+tools  │  │
-│  │ bash        │  │ OpenAI      │  │                 │  │
+│  │ read_file   │  │ DeepSeek    │  │ writing/        │  │
+│  │ write_file  │  │ Qwen        │  │ SKILL.md        │  │
+│  │ bash        │  │ OpenAI      │  │ → system_prompt │  │
 │  └─────────────┘  └─────────────┘  └─────────────────┘  │
 └──────────────────────────────────────────────────────────┘
                             │
@@ -195,22 +195,21 @@ async def agent_loop(
 
 #### Skill 系统 (skills/)
 
-YAML 定义的业务能力，包含 system_prompt + 工具列表。
+参照 pi Agent Skills 标准。Skill = SKILL.md（YAML frontmatter + Markdown 正文）。
 
 ```python
 @dataclass
 class Skill:
-    name: str
-    description: str
-    system_prompt: str
-    tools: list[str]  # ["read_file", "write_file", "bash"]
-
-def load_skill(name) -> Skill
-def list_skills() -> list[str]
-def build_system_prompt(skill, tools) -> str
+    name: str              # frontmatter.name
+    description: str       # frontmatter.description
+    system_prompt: str     # Markdown 正文
+    dir: Path | None       # Skill 目录（含 scripts/）
 ```
 
-初始化时：加载 Skill YAML → 实例化工具 → 注册到 ToolRegistry → 拼装 system_prompt → 创建 Agent + AgentSession。
+- 内置工具全局可用（read_file / write_file / bash），Skill 不声明工具列表
+- Agent 行为由 system_prompt 决定
+- 自定义脚本（`scripts/`）通过 bash 执行，不注册为独立 Tool
+- `create_agent_from_skill(name, llm)` → 返回 (Agent, ToolRegistry)
 
 #### Observability (observability/)
 
