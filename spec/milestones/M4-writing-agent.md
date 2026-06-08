@@ -25,7 +25,7 @@
 ##### M4-3：写作 Skill 完善 `[ ]`
 
 - **目标**：完善 writing skill 的 system_prompt，让 LLM 看懂模板、按章节写作、导出。
-- **文件**：`config/skills/writing.yaml`
+- **文件**：`config/skills/writing/SKILL.md`
 - **实现**：
   - 明确流程步骤编号（1/2/3/4）
   - 每步只调一次工具，拿结果后立即下一步

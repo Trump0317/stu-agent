@@ -4,11 +4,13 @@
 
 ## 开发入口
 
-读 [spec/index.md](spec/index.md)，包含完整规格、架构、里程碑。
+读 [spec/index.md](spec/index.md)，完整规格在其中。
 
-## 关键上下文
+## 关键规则
 
+- **分支**：master(稳定) ← dev(集成) ← M3(里程碑) | docs/xxx | fix/xxx
+- **开发方法**：TDD，详见 [spec/workflow.md](spec/workflow.md)
+- **里程碑状态**：`[ ]` → `[~]` → `[x]`
 - **语言**：中文回复，代码标识符英文
-- **开发方法**：TDD（先测试后实现），详见 [spec/workflow.md](spec/workflow.md)
-- **当前进度**：M0+M1+M2 完成（226 tests），下一步 M3 Skill 系统
 - **测试**：`pytest -q` 全部通过方可提交
+- **当前**：M0+M1+M2 完成（226 tests），下一步 M3
