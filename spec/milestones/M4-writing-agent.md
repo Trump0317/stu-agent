@@ -1,4 +1,4 @@
-### M4：写作 Agent `[~]`
+### M4：写作 Agent `[x]`
 
 > 目标：Skill 自包含。模板解析 + docx 填充 + md→word 全部作为脚本放在 `scripts/`，
 > Agent 通过 bash 调用。自定义模板支持 .yaml / .md / .docx，
@@ -9,7 +9,7 @@
 | M4-1 | Skill 脚本：模板解析 + docx 填充 + md→word | [x] |
 | M4-2 | 写作 SKILL.md 完善 | [x] |
 | M4-3 | 单元测试（脚本级） | [x] |
-| M4-4 | E2E 测试 + 边界（真实 LLM） | [~] |
+| M4-4 | E2E 测试 + 边界（真实 LLM） | [x] |
 
 ##### M4-1：Skill 脚本 `[x]`
 

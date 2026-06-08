@@ -28,6 +28,7 @@ async def parse_openai_stream(stream) -> AsyncIterator[LLMResponse]:
     # 累积中的工具调用: id -> {id, name, arguments_raw}
     pending_tool_calls: dict[str, dict] = {}
     pending_usage: dict | None = None
+    _current_tc_id: str | None = None  # DeepSeek: 后续块的 id 为 None
 
     async for chunk in stream:
         if not chunk.choices:
@@ -54,13 +55,18 @@ async def parse_openai_stream(stream) -> AsyncIterator[LLMResponse]:
         # 处理工具调用
         if hasattr(delta, "tool_calls") and delta.tool_calls:
             for tc in delta.tool_calls:
-                tc_id = tc.id
-                if tc_id not in pending_tool_calls:
+                # DeepSeek: 第一个 chunk 有 id，后续 chunk id=None
+                tc_id = tc.id if tc.id else _current_tc_id
+                if tc_id and tc_id not in pending_tool_calls:
                     pending_tool_calls[tc_id] = {
                         "id": tc_id,
                         "name": "",
                         "arguments_raw": "",
                     }
+                if tc.id:
+                    _current_tc_id = tc.id
+                if tc_id is None:
+                    continue  # 无法确定归属，跳过
                 # 累积 function.name（通常只在第一个 chunk 出现）
                 if hasattr(tc.function, "name") and tc.function.name:
                     pending_tool_calls[tc_id]["name"] = tc.function.name
