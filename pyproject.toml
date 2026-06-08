@@ -17,6 +17,9 @@ dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.24.0",
 ]
+pdf = [
+    "weasyprint>=60.0",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
